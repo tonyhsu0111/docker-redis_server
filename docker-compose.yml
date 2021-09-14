@@ -1,0 +1,49 @@
+version: '3.2'
+services:
+  redisproxy:
+    build: ./nginx
+    image: redisproxy:latest
+    hostname: redisproxy
+    container_name: redisproxy
+    networks:
+      - nuts
+    volumes:
+      - ./nginx/conf/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf/conf.d:/etc/nginx/conf.d
+      - ./data/redisproxy.log/:/var/log/nginx/
+    restart: always
+    ports:
+      - 6379:6379
+    depends_on:
+       - redisdb.local
+
+  redisdb.local:
+    container_name: redisdb.local
+    image: redis:latest
+    #command: redis-server --requirepass  1qasde32
+    volumes:
+     - ./data:/data
+    restart: always
+#    ports:
+#     - 6379:6379
+    networks:
+        - nuts
+
+  redis.admin:
+    image: erikdubbelboer/phpredisadmin:latest
+    environment:
+        ADMIN_USER: admin
+        ADMIN_PASS: admin 
+        REDIS_1_HOST: redisdb.local
+        #REDIS_1_AUTH: 1qasde32
+        REDIS_1_PORT: 6379
+    container_name: redis.admin
+    privileged: true
+    networks:
+        - nuts
+    restart: always
+    ports:
+        - 88:80
+networks:
+  nuts:
+    driver: bridge
